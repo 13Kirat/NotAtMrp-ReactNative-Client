@@ -16,11 +16,18 @@ export default function SearchScreen() {
   const [maxPrice, setMaxPrice] = useState('');
   const [results, setResults] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const colorScheme = useColorScheme();
 
   const debouncedQuery = useDebounce(query, 500);
 
-  const handleSearch = async () => {
+  const handleSearch = async (isNewSearch = false) => {
+    if (isNewSearch) {
+      setPage(1);
+      setResults([]);
+    }
     setLoading(true);
     try {
       const params = {
@@ -28,9 +35,11 @@ export default function SearchScreen() {
         location,
         minPrice: minPrice ? Number(minPrice) : undefined,
         maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        page: isNewSearch ? 1 : page,
       };
       const data = await searchEvents(params);
-      setResults(data.events);
+      setResults(prev => isNewSearch ? data.events : [...prev, ...data.events]);
+      setTotalPages(data.totalPages);
     } catch (error) {
       console.error('Failed to search events.');
     } finally {
@@ -38,9 +47,21 @@ export default function SearchScreen() {
     }
   };
 
+  const handleLoadMore = () => {
+    if (page < totalPages && !loadingMore) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
+
   useEffect(() => {
-    handleSearch();
+    handleSearch(true);
   }, [debouncedQuery, location, minPrice, maxPrice]);
+
+  useEffect(() => {
+    if (page > 1) {
+      handleSearch();
+    }
+  }, [page]);
 
   const styles = StyleSheet.create({
     container: {
@@ -86,13 +107,16 @@ export default function SearchScreen() {
       fontSize: 18,
       color: '#6b7280',
     },
+    footer: {
+      paddingVertical: 20,
+    },
   });
 
   return (<>
     <Stack.Screen options={{
       headerLeft: () => (
         <Pressable onPress={() => router.push("/(tabs)")}>
-          <Ionicons name="arrow-back" size={24} style={{ marginRight: 16 }} />
+          <Ionicons name="arrow-back" size={24} color={colorScheme === 'dark' ? 'white' : 'black'} style={{ marginRight: 16 }} />
         </Pressable>
       ),
     }} />
@@ -130,13 +154,18 @@ export default function SearchScreen() {
         />
       </View>
 
-      {loading ? (
+      {loading && page === 1 ? (
         <ActivityIndicator size="large" color={colorScheme === 'dark' ? '#fff' : '#000'} style={styles.loader} />
       ) : (
         <FlatList
           data={results}
           renderItem={({ item }) => <EventCard event={item} />}
           keyExtractor={(item) => item.id.toString()}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={() =>
+            loadingMore ? <ActivityIndicator style={styles.footer} /> : null
+          }
           ListEmptyComponent={() => (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No results found.</Text>

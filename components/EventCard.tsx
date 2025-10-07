@@ -11,7 +11,7 @@ export default function EventCard({ event }: EventCardProps) {
 
   const styles = StyleSheet.create({
     card: {
-      backgroundColor: colorScheme === 'dark' ? '#1f2937' : 'white',
+      backgroundColor: 'white',
       borderRadius: 12,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
@@ -36,22 +36,22 @@ export default function EventCard({ event }: EventCardProps) {
     title: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: colorScheme === 'dark' ? 'white' : 'black',
+      color: 'black',
       marginTop: 4,
     },
     date: {
       fontSize: 14,
-      color: colorScheme === 'dark' ? '#d1d5db' : '#4b5563',
+      color: '#4b5563',
       marginTop: 4,
     },
     location: {
       fontSize: 14,
-      color: colorScheme === 'dark' ? '#d1d5db' : '#4b5563',
+      color: '#4b5563',
     },
     price: {
       fontSize: 18,
       fontWeight: 'bold',
-      color: colorScheme === 'dark' ? '#4ade80' : '#16a34a',
+      color: '#16a34a',
       marginTop: 8,
     },
   });
@@ -59,7 +59,7 @@ export default function EventCard({ event }: EventCardProps) {
   return (
     <Link href={`/events/${event.id}`} asChild>
       <Pressable style={styles.card}>
-        <Image source={{ uri: event.poster_image }} style={styles.image} />
+        <Image source={{ uri: event.posterUrl }} style={styles.image} />
         <View style={styles.content}>
           <Text style={styles.category}>{event.category.toUpperCase()}</Text>
           <Text style={styles.title}>{event.title}</Text>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { getEventById } from '../../api';
 import { Event } from '../../types';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -104,21 +105,20 @@ export default function EventDetailScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <Image source={{ uri: event.poster_image }} style={styles.image} />
+      <Image source={{ uri: event?.posterUrl }} style={styles.image} />
       <View style={styles.content}>
-        <Text style={styles.title}>{event.title}</Text>
-        <Text style={styles.category}>{event.category.toUpperCase()}</Text>
-        
+        <Text style={styles.title}>{event?.title}</Text>
+        <Text style={styles.category}>{event?.category.toUpperCase()}</Text>
+
         <View style={styles.infoContainer}>
-          <InfoRow icon="📅" label="Date" value={new Date(event.date).toLocaleDateString()} />
-          <InfoRow icon="🕒" label="Time" value={event.time} />
-          <InfoRow icon="📍" label="Venue" value={`${event.venue}, ${event.location}`} />
-          <InfoRow icon="🎤" label="Organizer" value={event.organizer} />
-          <InfoRow icon="🪑" label="Seats Available" value={event.available_seats.toString()} />
-          <InfoRow icon="💲" label="Price" value={`$${event.price}`} isBold={true} />
+          <InfoRow icon="calendar-outline" label="Date" value={new Date(event?.date).toLocaleDateString()} />
+          <InfoRow icon="time-outline" label="Time" value={event?.time} />
+          <InfoRow icon="location-outline" label="Venue" value={`${event?.venue}, ${event?.location}`} />
+          <InfoRow icon="mic-outline" label="Organizer" value={event?.organizer} />
+          <InfoRow icon="cash-outline" label="Price" value={`$${event?.price}`} isBold={true} />
         </View>
 
-        <Text style={styles.description}>{event.description}</Text>
+        <Text style={styles.description}>{event?.description}</Text>
 
         <Pressable style={styles.bookNowButton}>
           <Text style={styles.bookNowText}>Book Now</Text>
@@ -128,7 +128,7 @@ export default function EventDetailScreen() {
   );
 }
 
-const InfoRow = ({ icon, label, value, isBold }: { icon: string, label: string, value: string, isBold?: boolean }) => {
+const InfoRow = ({ icon, label, value, isBold }: { icon: keyof typeof Ionicons.glyphMap, label: string, value: string, isBold?: boolean }) => {
   const colorScheme = useColorScheme();
   const styles = StyleSheet.create({
     container: {
@@ -137,7 +137,6 @@ const InfoRow = ({ icon, label, value, isBold }: { icon: string, label: string, 
       marginBottom: 12,
     },
     icon: {
-      fontSize: 20,
       marginRight: 12,
     },
     label: {
@@ -155,7 +154,7 @@ const InfoRow = ({ icon, label, value, isBold }: { icon: string, label: string, 
 
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>{icon}</Text>
+      <Ionicons name={icon} size={20} color={colorScheme === 'dark' ? 'white' : 'black'} style={styles.icon} />
       <View>
         <Text style={styles.label}>{label}</Text>
         <Text style={[styles.value, isBold ? styles.valueBold : {}]}>{value}</Text>

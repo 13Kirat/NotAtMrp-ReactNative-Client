@@ -62,7 +62,6 @@ export default function HomeScreen() {
     container: {
       flex: 1,
       backgroundColor: colorScheme === 'dark' ? 'black' : '#f3f4f6',
-      paddingTop: 40,
     },
     searchContainer: {
       padding: 16,

@@ -34,11 +34,16 @@ export const searchEvents = async (params: {
   location?: string; 
   minPrice?: number; 
   maxPrice?: number; 
-}): Promise<{ events: Event[] }> => {
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedEvents> => {
   console.log('searchEvents called with:', params);
   const response = await apiClient.get('/events/search', { params });
   console.log('searchEvents response:', response.data);
-  return response.data;
+  return {
+    events: response.data.events,
+    ...response.data.pagination,
+  };
 };
 
 export const getEventById = async (id: string): Promise<Event> => {
