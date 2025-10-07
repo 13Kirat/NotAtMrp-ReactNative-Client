@@ -23,9 +23,9 @@ export default function HomeScreen() {
     else setLoadingMore(true);
 
     try {
-      console.log('Fetching events with:', { pageNum, category });
-      const data = await getEvents(pageNum, 10, category);
-      console.log('Received data:', data);
+      // console.log('Fetching events with:', { pageNum, category });
+      const data = await getEvents(pageNum, 5, category);
+      // console.log('Received data:', data);
       setEvents(prev => pageNum === 1 ? data.events : [...prev, ...data.events]);
       setTotalPages(data.totalPages);
     } catch (error) {
