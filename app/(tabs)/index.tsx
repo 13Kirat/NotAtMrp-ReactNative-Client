@@ -1,98 +1,155 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, TextInput, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { getEvents } from '../../api';
+import { Event } from '../../types';
+import EventCard from '../../components/EventCard';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { router } from 'expo-router';
+
+const CATEGORIES = ['Comedy', 'Dance', 'Technology', 'Music', 'Food', 'Art', 'Sports', 'Business', 'Workshop', 'Food & Drink', 'Family', 'Wellness'];
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [events, setEvents] = useState<Event[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const colorScheme = useColorScheme();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const fetchEvents = async (pageNum = 1, category?: string) => {
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+
+    try {
+      console.log('Fetching events with:', { pageNum, category });
+      const data = await getEvents(pageNum, 10, category);
+      console.log('Received data:', data);
+      setEvents(prev => pageNum === 1 ? data.events : [...prev, ...data.events]);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error('Failed to fetch events.', error);
+    } finally {
+      if (pageNum === 1) setLoading(false);
+      else setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents(1, selectedCategory);
+  }, [selectedCategory]);
+
+  const handleLoadMore = () => {
+    if (page < totalPages && !loadingMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchEvents(nextPage, selectedCategory);
+    }
+  };
+
+  const onCategoryPress = (category: string) => {
+    setPage(1);
+    setSelectedCategory(category === selectedCategory ? undefined : category);
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return <ActivityIndicator size="large" color={colorScheme === 'dark' ? '#fff' : '#000'} />;
+  };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colorScheme === 'dark' ? 'black' : '#f3f4f6',
+      paddingTop: 40,
+    },
+    searchContainer: {
+      padding: 16,
+      backgroundColor: colorScheme === 'dark' ? '#111827' : 'white',
+    },
+    textInput: {
+      backgroundColor: colorScheme === 'dark' ? '#1f2937' : '#e5e7eb',
+      color: colorScheme === 'dark' ? 'white' : 'black',
+      borderRadius: 9999,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: colorScheme === 'dark' ? '#374151' : '#d1d5db',
+    },
+    categoriesScrollView: {
+      marginTop: 16,
+    },
+    categoryButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 9999,
+      marginRight: 8,
+    },
+    categoryButtonSelected: {
+      backgroundColor: '#3b82f6',
+    },
+    categoryButtonUnselected: {
+      backgroundColor: colorScheme === 'dark' ? '#374151' : '#e5e7eb',
+    },
+    categoryText: {
+      color: colorScheme === 'dark' ? 'white' : 'black',
+    },
+    categoryTextSelected: {
+      color: 'white',
+    },
+    loader: {
+      marginTop: 32,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 80,
+    },
+    emptyText: {
+      fontSize: 18,
+      color: '#6b7280',
+    },
+  });
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <Pressable onPress={() => router.push('/search')}>
+          <TextInput
+            placeholder="Search for events..."
+            placeholderTextColor={colorScheme === 'dark' ? '#9CA3AF' : '#6B7280'}
+            style={styles.textInput}
+            editable={false}
+          />
+        </Pressable>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScrollView}>
+          {CATEGORIES.map(cat => (
+            <Pressable key={cat} onPress={() => onCategoryPress(cat)} style={[styles.categoryButton, selectedCategory === cat ? styles.categoryButtonSelected : styles.categoryButtonUnselected]}>
+              <Text style={[styles.categoryText, selectedCategory === cat ? styles.categoryTextSelected : {}]}>{cat}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      {loading && page === 1 ? (
+        <ActivityIndicator size="large" color={colorScheme === 'dark' ? '#fff' : '#000'} style={styles.loader} />
+      ) : (
+        <FlatList
+          data={events}
+          renderItem={({ item }) => <EventCard event={item} />}
+          keyExtractor={(item) => item.id.toString()}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No events found.</Text>
+            </View>
+          )}
+        />
+      )}
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
